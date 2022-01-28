@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="Assets\Class\Block.cs" />
     <Compile Include="Assets\Class\Object.cs" />
+    <Compile Include="Assets\Script\AstarTest.cs" />
     <Compile Include="Assets\Script\Contralor.cs" />
     <Reference Include="UnityEngine">
       <HintPath>B:/uniiiityyy/2019.3.13f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>

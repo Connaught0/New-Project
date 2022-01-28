@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Block
+public class Block : MonoBehaviour
 {
+    public int x;
+    public int y;
     int height;
-    int x;
-    int y;
+    //int x;
+    //int y;
     Block right;
     Block left;
     Block up;
