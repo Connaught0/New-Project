@@ -6,6 +6,9 @@ using UnityEngine.Events;
 
 public class AstarTest : MonoBehaviour
 {
+    const int _blockX = 14;
+    const int _blockY = 14;
+    public Camera cam;
     List<List<Block>> Map;
     public GameObject block;
     public Canvas canvas;
@@ -33,12 +36,17 @@ public class AstarTest : MonoBehaviour
     {
         Map= new List<List<Block>>();
 
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < _blockX; i++)
         {
             List<Block> mapl = new List<Block>();
-            for (int j = 0; j < 5; j++)
+            for (int j = 0; j < _blockY; j++)
             {
-                GameObject bl = Instantiate(block, new Vector3(75 + i * 150, 75 + j * 150, 0), transform.rotation, canvas.transform);
+
+                
+                GameObject bl = Instantiate(block);
+                bl.transform.SetParent(canvas.transform);
+                bl.GetComponent<RectTransform>().anchoredPosition3D = new Vector3(150 * i, 150 * j,0);
+                bl.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
                 bl.GetComponent<Block>().x = i + 1;
                 bl.GetComponent<Block>().y = j + 1;
                 bl.transform.Find("Text").GetComponent<Text>().text = (i + 1) + "," + (j + 1);
@@ -56,8 +64,8 @@ public class AstarTest : MonoBehaviour
         public Vector2 vector;
         public int G;
         public float H;
-        public Vector2 Parent;
-        public Astar(Vector2 v, int g, float h, Vector2 p)
+        public Astar Parent;
+        public Astar(Vector2 v, int g, float h, Astar p)
         {
             this.vector = v;
             this.G = g;
@@ -71,39 +79,44 @@ public class AstarTest : MonoBehaviour
         List<Vector2> Road = new List<Vector2>();
         List<Astar> Openlist = new List<Astar>();
         List<Astar> Closelist = new List<Astar>();
-        float k = float.MaxValue;
-        int g = 0;
-        Openlist.Add(new Astar(s, g, Vector2.Distance(s, e),Vector2.zero));
-        Vector2 now = s;
+        bool[,] AstarCheck = new bool[_blockX, _blockY] ;
 
+
+        int g = 0;
+        Openlist.Add(new Astar(s, g, Vector2.Distance(s, e),null));//Add the start position
+        Vector2 now = s;
+        Astar nowA = Openlist[0];
+        List<Vector2> _4ve = new List<Vector2>() { Vector2.up, Vector2.down, Vector2.right, Vector2.left };
         while(now!=e)
         {
             g = Openlist[0].G+1;//The Moved Step base on the last step;
             //judge the four vector
-            if((Openlist[0].vector+Vector2.down).y>=1)
+            foreach(var ve in _4ve)
             {
-                Openlist.Add(new Astar(Openlist[0].vector + Vector2.down, g, Vector2.Distance(Openlist[0].vector + Vector2.down, e), Openlist[0].vector));
-            }
-            if ((Openlist[0].vector + Vector2.up).y <= 5)
-            {
-                Openlist.Add(new Astar(Openlist[0].vector + Vector2.up, g, Vector2.Distance(Openlist[0].vector + Vector2.up, e), Openlist[0].vector));
-            }
-            if ((Openlist[0].vector + Vector2.right).x <= 5)
-            {
-                Openlist.Add(new Astar(Openlist[0].vector + Vector2.right, g, Vector2.Distance(Openlist[0].vector + Vector2.right, e), Openlist[0].vector));
-            }
-            if ((Openlist[0].vector + Vector2.left).x >= 1)
-            {
-                Openlist.Add(new Astar(Openlist[0].vector + Vector2.left, g, Vector2.Distance(Openlist[0].vector + Vector2.left, e), Openlist[0].vector));
+
+                if ((Openlist[0].vector + ve).x >= 1 && (Openlist[0].vector + ve).x <= _blockX && (Openlist[0].vector + ve).y >= 1 && (Openlist[0].vector + ve).y <= _blockY)
+                {
+                    Debug.Log(Openlist[0].vector + ve);
+                    if (!AstarCheck[(int)((Openlist[0].vector + ve).x-1), (int)((Openlist[0].vector + ve).y-1)])//if the vector has been checked, the value will be true
+                    {
+                        Openlist.Add(new Astar(Openlist[0].vector + ve, g, Vector2.Distance(Openlist[0].vector + ve, e), Openlist[0]));
+                        AstarCheck[(int)((Openlist[0].vector + ve).x-1), (int)((Openlist[0].vector + ve).y-1)] = true;
+                        
+                    }
+                }
             }
             //Add the min G+H to the closelist;
             Closelist.Add(Openlist[0]);
             Openlist.Remove(Openlist[0]);
             Openlist.Sort((x, y) => { return (x.G + x.H).CompareTo(y.G + y.H); });
             now = Openlist[0].vector;
+            nowA = Openlist[0];
         }
-        Debug.Log(Closelist);
-
+        while(nowA!=null)
+        {
+            Road.Add(nowA.vector);
+            nowA = nowA.Parent;
+        }
 
         return Road;
 
@@ -116,7 +129,11 @@ public class AstarTest : MonoBehaviour
         else
         {
             end = new Vector2(obj.GetComponent<Block>().x, obj.GetComponent<Block>().y);
-            AstarAlthgorithm(start, end, Map);
+            List<Vector2> Road = AstarAlthgorithm(start, end, Map);
+            foreach(var r in Road)
+            {
+                Map[(int)r.x-1][(int)r.y-1].GetComponent<Image>().color = Color.red;
+            }
         }
         ClickFirst = !ClickFirst;
 
